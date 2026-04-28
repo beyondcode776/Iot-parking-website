@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS = {
   port:            80,
   pollingInterval: 2000,
   demoMode:        true,          // start in demo mode — safe default
+  serialMode:      false,         // serial backend mode (USB Arduino)
 };
 
 export default function App() {
@@ -26,7 +27,12 @@ export default function App() {
 
   // Toggle demo mode
   const handleDemoToggle = useCallback(() => {
-    setSettings(s => ({ ...s, demoMode: !s.demoMode }));
+    setSettings(s => ({ ...s, demoMode: !s.demoMode, serialMode: false }));
+  }, []);
+
+  // Toggle serial backend mode
+  const handleSerialToggle = useCallback(() => {
+    setSettings(s => ({ ...s, serialMode: !s.serialMode, demoMode: false }));
   }, []);
 
   // Save connection settings from panel
@@ -105,6 +111,7 @@ export default function App() {
           onSettingsChange={handleSettingsChange}
           connectionStatus={connectionStatus}
           onTestConnection={handleTestConnection}
+          onSerialToggle={handleSerialToggle}
         />
       </main>
 

@@ -1,10 +1,32 @@
+import { useEffect, useState } from 'react';
 import { ParkingSlot } from './ParkingSlot';
 
 export function ParkingGrid({ slots }) {
-  const rowA = slots.filter(s => s.row === 'A');
-  const rowB = slots.filter(s => s.row === 'B');
+  const [liveSlots, setLiveSlots] = useState(slots);
 
-  const availableCount = slots.filter(s => !s.occupied).length;
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetch("http://localhost:5000/status")
+        .then(res => res.json())
+        .then(data => {
+          console.log("GRID DATA:", data);
+
+          if (!data.slots) return;
+
+          setLiveSlots(prev =>
+            prev.map((slot, index) => ({
+              ...slot,
+              occupied: data.slots[index]?.status === "occupied"
+            }))
+          );
+        })
+        .catch(err => console.error(err));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const availableCount = liveSlots.slice(0, 1).filter(s => !s.occupied).length;
 
   return (
     <section className="section-block glass-card" id="parking" style={{ marginBottom: 0 }}>
@@ -29,46 +51,31 @@ export function ParkingGrid({ slots }) {
       </div>
 
       <div className="parking-lot">
-        {/* Entrance */}
         <div className="lot-entrance">
           <div className="entrance-marker">▼ ENTRANCE</div>
         </div>
 
-        {/* Driving road top */}
         <div className="lot-road">
           <span style={{ color: 'var(--text-muted)', fontSize: '.72rem', letterSpacing: '.1em' }}>
             ◀ ─ ─ ─ DRIVE LANE ─ ─ ─ ▶
           </span>
         </div>
 
-        {/* Slot area */}
         <div className="lot-area">
-          {/* Row A */}
           <div className="lot-row">
             <div className="row-label">Row A</div>
             <div className="row-slots">
-              {rowA.map(slot => <ParkingSlot key={slot.id} slot={slot} />)}
-            </div>
-          </div>
-
-          {/* Aisle divider */}
-          <div className="lot-aisle">— DRIVING AISLE —</div>
-
-          {/* Row B */}
-          <div className="lot-row">
-            <div className="row-label">Row B</div>
-            <div className="row-slots">
-              {rowB.map(slot => <ParkingSlot key={slot.id} slot={slot} />)}
+              {liveSlots.slice(0, 1).map(slot => (
+                <ParkingSlot key={slot.id} slot={slot} />
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Exit */}
         <div className="lot-exit">
           <div className="exit-marker">▼ EXIT</div>
         </div>
 
-        {/* Legend */}
         <div className="lot-legend">
           <div className="legend-item">
             <div className="legend-dot available" />
@@ -77,10 +84,6 @@ export function ParkingGrid({ slots }) {
           <div className="legend-item">
             <div className="legend-dot occupied" />
             <span>Occupied</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-dot reserved" />
-            <span>Reserved</span>
           </div>
         </div>
       </div>
